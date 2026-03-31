@@ -8,34 +8,10 @@ connectDB();
 
 const app = express();
 
-// Parse CLIENT_URL from environment - support single URL or comma-separated list
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-console.log("CORS allowed origins:", allowedOrigins);
-
-// CORS middleware with proper header validation
+// CORS middleware: allow all origins
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, curl)
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      // Check if origin is in allowed list
-      if (allowedOrigins.includes(origin)) {
-        // Explicitly return the origin (not true) for credentialed requests
-        return callback(null, origin);
-      }
-
-      // In production, log the rejected origin for debugging
-      console.warn(`CORS denied for origin: ${origin}`);
-      console.warn(`Allowed origins are: ${allowedOrigins.join(", ")}`);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: true, // Reflect request origin, effectively allowing everyone
     credentials: true, // Allow cookies and authorization headers
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     allowedHeaders: [
