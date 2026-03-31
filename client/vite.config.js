@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(),tailwindcss()],
   server: {
     proxy: {
-      '/api': 'https://your-app.onrender.com',
+      '/api': 'https://flowday-baxt.onrender.com',
     },
   },
 })
