@@ -23,6 +23,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         name: user.name,
         email: user.email,
         timezone: user.timezone,
+        isPublic: user.isPublic,
       },
     });
 };
@@ -42,6 +43,7 @@ const register = async (req, res) => {
     const user = await User.create({ name, email, password });
     sendTokenResponse(user, 201, res);
   } catch (error) {
+    console.error("Register error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -78,13 +80,15 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
-  res.cookie('token', '', { maxAge: 1 }).json({ success: true, message: 'Logged out' })
-}
+  res
+    .cookie("token", "", { maxAge: 1 })
+    .json({ success: true, message: "Logged out" });
+};
 
 // @route   GET /api/auth/me
 const getMe = async (req, res) => {
-  const user = await User.findById(req.user.id)
-  res.json({ success: true, user })
-}
+  const user = await User.findById(req.user._id);
+  res.json({ success: true, user });
+};
 
-module.exports = { register, login, logout, getMe }
+module.exports = { register, login, logout, getMe };

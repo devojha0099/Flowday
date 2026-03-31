@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  /* Prose styles for journal markdown */
+  .prose h1, .prose h2, .prose h3 {
+    @apply text-slate-800 font-semibold;
+  }
+  .prose p {
+    @apply text-slate-600 leading-relaxed;
+  }
+  .prose ul, .prose ol {
+    @apply text-slate-600;
+  }
+  .prose code {
+    @apply bg-slate-100 text-indigo-600 px-1 py-0.5 rounded text-xs font-mono;
+  }
+  .prose blockquote {
+    @apply border-l-4 border-indigo-200 pl-4 text-slate-500 italic;
+  }
+}
