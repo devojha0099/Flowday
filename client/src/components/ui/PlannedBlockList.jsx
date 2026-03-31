@@ -5,18 +5,10 @@ const PlannedBlockList = ({ plan }) => {
   const dispatch = useDispatch()
 
   if (!plan || plan.blocks.length === 0) {
-    return (
-      <p className="text-sm text-slate-400 text-center py-4">
-        No blocks yet — add one above
-      </p>
-    )
+    return <p className="text-sm text-slate-400 text-center py-4">No blocks yet — add one above</p>
   }
 
   const sorted = [...plan.blocks].sort((a, b) => a.plannedStart.localeCompare(b.plannedStart))
-
-  const handleDelete = (blockId) => {
-    dispatch(deleteBlock({ planId: plan._id, blockId }))
-  }
 
   return (
     <div className="space-y-2">
@@ -33,7 +25,7 @@ const PlannedBlockList = ({ plan }) => {
             </p>
           </div>
           <button
-            onClick={() => handleDelete(block._id)}
+            onClick={() => dispatch(deleteBlock({ planId: plan._id, blockId: block._id }))}
             className="text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             Remove

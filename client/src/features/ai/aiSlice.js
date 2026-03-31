@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+/*import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../api/axios'
 
 export const loadDailyQuote = createAsyncThunk('ai/quote', async (_, { rejectWithValue }) => {
@@ -45,4 +45,4 @@ const aiSlice = createSlice({
   },
 })
 
-export default aiSlice.reducer
+export default aiSlice.reducer*/

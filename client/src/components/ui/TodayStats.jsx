@@ -1,15 +1,8 @@
 const TodayStats = ({ entries, plan }) => {
-  const totalActualMins = entries
-    .filter(e => e.actualMins)
-    .reduce((sum, e) => sum + e.actualMins, 0)
+  const totalActualMins = entries.filter(e => e.actualMins).reduce((sum, e) => sum + e.actualMins, 0)
+  const totalPlannedMins = plan?.blocks?.reduce((sum, b) => sum + (b.estimatedMins || 0), 0) || 0
 
-  const totalPlannedMins = plan?.blocks
-    ?.reduce((sum, b) => sum + (b.estimatedMins || 0), 0) || 0
-
-  const driftValues = entries
-    .filter(e => e.driftMinutes && e.driftMinutes !== 0)
-    .map(e => e.driftMinutes)
-
+  const driftValues = entries.filter(e => e.driftMinutes && e.driftMinutes !== 0).map(e => e.driftMinutes)
   const avgDrift = driftValues.length
     ? Math.round(driftValues.reduce((a, b) => a + b, 0) / driftValues.length)
     : 0
@@ -22,8 +15,8 @@ const TodayStats = ({ entries, plan }) => {
   }
 
   const stats = [
-    { label: 'Tracked', value: formatMins(totalActualMins), color: 'text-slate-800' },
-    { label: 'Planned', value: formatMins(totalPlannedMins), color: 'text-slate-800' },
+    { label: 'Tracked',  value: formatMins(totalActualMins),  color: 'text-slate-800' },
+    { label: 'Planned',  value: formatMins(totalPlannedMins), color: 'text-slate-800' },
     {
       label: 'Avg drift',
       value: avgDrift === 0 ? 'On time' : avgDrift > 0 ? `+${avgDrift}m` : `${avgDrift}m`,

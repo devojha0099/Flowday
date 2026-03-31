@@ -4,7 +4,6 @@ import { Navigate } from 'react-router-dom'
 const ProtectedRoute = ({ children }) => {
   const { user, isInitialized } = useSelector((state) => state.auth)
 
-  // Still checking if user is logged in — show nothing yet
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -13,10 +12,7 @@ const ProtectedRoute = ({ children }) => {
     )
   }
 
-  // Not logged in — redirect to login
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
+  if (!user) return <Navigate to="/login" replace />
 
   return children
 }

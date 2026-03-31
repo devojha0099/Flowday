@@ -1,11 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import {
-  fetchGoals,
-  fetchGoalProgress,
-  createGoalApi,
-  updateGoalApi,
-  deleteGoalApi,
-} from '../../api/goalApi'
+import { fetchGoals, fetchGoalProgress, createGoalApi, deleteGoalApi } from '../../api/goalApi'
 
 export const loadGoals = createAsyncThunk('goals/load', async (_, { rejectWithValue }) => {
   try {
@@ -45,26 +39,15 @@ export const deleteGoal = createAsyncThunk('goals/delete', async (id, { rejectWi
 
 const goalSlice = createSlice({
   name: 'goals',
-  initialState: {
-    goals: [],
-    progress: [],   // goals with actualHours and completionPct added
-    isLoading: false,
-    error: null,
-  },
+  initialState: { goals: [], progress: [], isLoading: false, error: null },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(loadGoals.fulfilled, (state, action) => {
-        state.goals = action.payload
-      })
-      .addCase(loadGoalProgress.fulfilled, (state, action) => {
-        state.progress = action.payload
-      })
-      .addCase(createGoal.fulfilled, (state, action) => {
-        state.goals.push(action.payload)
-      })
-      .addCase(deleteGoal.fulfilled, (state, action) => {
-        state.goals = state.goals.filter(g => g._id !== action.payload)
+      .addCase(loadGoals.fulfilled,        (state, action) => { state.goals = action.payload })
+      .addCase(loadGoalProgress.fulfilled, (state, action) => { state.progress = action.payload })
+      .addCase(createGoal.fulfilled,       (state, action) => { state.goals.push(action.payload) })
+      .addCase(deleteGoal.fulfilled,       (state, action) => {
+        state.goals    = state.goals.filter(g => g._id !== action.payload)
         state.progress = state.progress.filter(g => g._id !== action.payload)
       })
       .addMatcher(

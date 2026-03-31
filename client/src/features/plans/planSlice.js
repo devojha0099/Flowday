@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { fetchPlanByDate, addBlockApi, deleteBlockApi, fetchWeekPlans } from '../../api/planApi'
 
-// Fetch today's or any date's plan
 export const loadPlan = createAsyncThunk('plans/loadPlan', async (date, { rejectWithValue }) => {
   try {
     const res = await fetchPlanByDate(date)
@@ -11,7 +10,6 @@ export const loadPlan = createAsyncThunk('plans/loadPlan', async (date, { reject
   }
 })
 
-// Add a block to today's plan
 export const addBlock = createAsyncThunk('plans/addBlock', async (blockData, { rejectWithValue }) => {
   try {
     const res = await addBlockApi(blockData)
@@ -21,7 +19,6 @@ export const addBlock = createAsyncThunk('plans/addBlock', async (blockData, { r
   }
 })
 
-// Delete a block
 export const deleteBlock = createAsyncThunk('plans/deleteBlock', async ({ planId, blockId }, { rejectWithValue }) => {
   try {
     const res = await deleteBlockApi(planId, blockId)
@@ -31,7 +28,6 @@ export const deleteBlock = createAsyncThunk('plans/deleteBlock', async ({ planId
   }
 })
 
-// Load the whole week (used later in analytics)
 export const loadWeekPlans = createAsyncThunk('plans/loadWeekPlans', async ({ startDate, endDate }, { rejectWithValue }) => {
   try {
     const res = await fetchWeekPlans(startDate, endDate)
@@ -44,32 +40,20 @@ export const loadWeekPlans = createAsyncThunk('plans/loadWeekPlans', async ({ st
 const planSlice = createSlice({
   name: 'plans',
   initialState: {
-    todayPlan: null,      // the current day's full plan object
-    weekPlans: [],        // array of plans for the week
+    todayPlan: null,
+    weekPlans: [],
     isLoading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(loadPlan.pending, (state) => { state.isLoading = true })
-      .addCase(loadPlan.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.todayPlan = action.payload
-      })
-      .addCase(loadPlan.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload
-      })
-      .addCase(addBlock.fulfilled, (state, action) => {
-        state.todayPlan = action.payload   // server returns the updated plan
-      })
-      .addCase(deleteBlock.fulfilled, (state, action) => {
-        state.todayPlan = action.payload
-      })
-      .addCase(loadWeekPlans.fulfilled, (state, action) => {
-        state.weekPlans = action.payload
-      })
+      .addCase(loadPlan.pending,    (state) => { state.isLoading = true })
+      .addCase(loadPlan.fulfilled,  (state, action) => { state.isLoading = false; state.todayPlan = action.payload })
+      .addCase(loadPlan.rejected,   (state, action) => { state.isLoading = false; state.error = action.payload })
+      .addCase(addBlock.fulfilled,  (state, action) => { state.todayPlan = action.payload })
+      .addCase(deleteBlock.fulfilled, (state, action) => { state.todayPlan = action.payload })
+      .addCase(loadWeekPlans.fulfilled, (state, action) => { state.weekPlans = action.payload })
   },
 })
 

@@ -1,20 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const {
-  getGoals,
-  getGoalProgress,
-  createGoal,
-  updateGoal,
-  deleteGoal,
-} = require("../controllers/goalController");
-const { verifyToken } = require("../middleware/authMiddleware");
+const express = require('express')
+const r = express.Router()
+const { getGoals, createGoal, updateGoal, deleteGoal, getGoalProgress } = require('../controllers/goalController')
+const { verifyToken } = require('../middleware/authMiddleware')
 
-router.use(verifyToken);
+r.use(verifyToken)
+r.get('/progress', getGoalProgress)
+r.get('/', getGoals)
+r.post('/', createGoal)
+r.put('/:id', updateGoal)
+r.delete('/:id', deleteGoal)
 
-router.get("/progress", getGoalProgress);  // MUST be before "/:id" catch-all
-router.get("/", getGoals);
-router.post("/", createGoal);
-router.put("/:id", updateGoal);
-router.delete("/:id", deleteGoal);
-
-module.exports = router;
+module.exports = r

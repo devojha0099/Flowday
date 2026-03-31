@@ -1,11 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import {
-  fetchTodayEntries,
-  createManualEntry,
-  startTimerApi,
-  stopTimerApi,
-  deleteEntryApi,
-} from '../../api/entryApi'
+import { fetchTodayEntries, createManualEntry, startTimerApi, stopTimerApi, deleteEntryApi } from '../../api/entryApi'
 
 export const loadTodayEntries = createAsyncThunk('entries/loadToday', async (_, { rejectWithValue }) => {
   try {
@@ -28,7 +22,6 @@ export const addManualEntry = createAsyncThunk('entries/addManual', async (data,
 export const startTimer = createAsyncThunk('entries/startTimer', async (data, { rejectWithValue }) => {
   try {
     const res = await startTimerApi(data)
-    // Save to localStorage so timer survives refresh
     localStorage.setItem('activeTimer', JSON.stringify({
       id: res.data.entry._id,
       startTime: res.data.entry.actualStart,
@@ -60,7 +53,6 @@ export const deleteEntry = createAsyncThunk('entries/delete', async (entryId, { 
   }
 })
 
-// Read localStorage on slice init — restore active timer if exists
 const savedTimer = localStorage.getItem('activeTimer')
 const restoredTimer = savedTimer ? JSON.parse(savedTimer) : null
 
@@ -68,7 +60,7 @@ const entrySlice = createSlice({
   name: 'entries',
   initialState: {
     todayEntries: [],
-    activeTimer: restoredTimer,  // { id, startTime, title, category }
+    activeTimer: restoredTimer,
     isLoading: false,
     error: null,
   },
@@ -82,7 +74,6 @@ const entrySlice = createSlice({
     builder
       .addCase(loadTodayEntries.fulfilled, (state, action) => {
         state.todayEntries = action.payload
-        // Sync activeTimer — if the running entry is already stopped in DB, clear it
         if (state.activeTimer) {
           const stillRunning = action.payload.find(
             e => e._id === state.activeTimer.id && !e.actualEnd
@@ -106,7 +97,6 @@ const entrySlice = createSlice({
         }
       })
       .addCase(stopTimer.fulfilled, (state, action) => {
-        // Replace the running entry with the completed one
         const idx = state.todayEntries.findIndex(e => e._id === action.payload._id)
         if (idx !== -1) state.todayEntries[idx] = action.payload
         state.activeTimer = null

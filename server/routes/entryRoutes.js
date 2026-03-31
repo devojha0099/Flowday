@@ -1,15 +1,17 @@
 const express = require('express')
-const router = express.Router()
-const { getTodayEntries, getEntriesByDate, createManualEntry, startTimer, stopTimer, deleteEntry } = require('../controllers/entryController')
+const r = express.Router()
+const {
+  getTodayEntries, getEntriesByDate,
+  createManualEntry, startTimer, stopTimer, deleteEntry,
+} = require('../controllers/entryController')
 const { verifyToken } = require('../middleware/authMiddleware')
 
-router.use(verifyToken)
+r.use(verifyToken)
+r.get('/today', getTodayEntries)
+r.post('/', createManualEntry)
+r.post('/timer/start', startTimer)
+r.patch('/timer/:id/stop', stopTimer)
+r.delete('/:id', deleteEntry)
+r.get('/:date', getEntriesByDate)
 
-router.get('/today', getTodayEntries)
-router.post('/timer/start', startTimer)
-router.patch('/timer/:id/stop', stopTimer)
-router.post('/', createManualEntry)
-router.get('/:date', getEntriesByDate)
-router.delete('/:id', deleteEntry)
-
-module.exports = router
+module.exports = r

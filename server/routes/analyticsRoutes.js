@@ -1,16 +1,15 @@
-const express = require("express");
-const router = express.Router();
+const express = require('express')
+const r = express.Router()
 const {
-  getWeeklySummary,
+  getWeeklyAnalytics,
   getHeatmap,
-  getMonthlySummary,
-} = require("../controllers/analyticsController");
-const { verifyToken } = require("../middleware/authMiddleware");
+  getMonthlyAnalytics,
+} = require('../controllers/analyticsController')
+const { verifyToken } = require('../middleware/authMiddleware')
 
-router.use(verifyToken);
+r.use(verifyToken)
+r.get('/week', getWeeklyAnalytics)
+r.get('/heatmap', getHeatmap)
+r.get('/month', getMonthlyAnalytics)
 
-router.get("/week", getWeeklySummary);
-router.get("/heatmap", getHeatmap);
-router.get("/month", getMonthlySummary);
-
-module.exports = router;
+module.exports = r

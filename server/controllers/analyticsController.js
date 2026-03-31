@@ -1,230 +1,125 @@
-const Entry = require("../models/Entry");
-const Plan = require("../models/Plan");
+const TimeEntry = require('../models/TimeEntry')
+const DayPlan = require('../models/DayPlan')
+const DailyScore = require('../models/DailyScore')
 
-// @route GET /api/analytics/week
-const getWeeklySummary = async (req, res) => {
+const getWeeklyAnalytics = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
-    const userId = req.user._id;
+    const { startDate, endDate } = req.query
+    const userId = req.user.id
 
-    // Get all entries and plans for the week
-    const entries = await Entry.find({
+    // Get all entries in range
+    const entries = await TimeEntry.find({
       userId,
       date: { $gte: startDate, $lte: endDate },
-    });
+      actualEnd: { $ne: null },
+    })
 
-    const plans = await Plan.find({
-      userId,
-      date: { $gte: startDate, $lte: endDate },
-    });
+    // Get all plans in range
+    const plans = await DayPlan.find({ userId, date: { $gte: startDate, $lte: endDate } })
+
+    // Get scores
+    const scores = await DailyScore.find({ userId, date: { $gte: startDate, $lte: endDate } })
 
     // Build day-by-day breakdown
-    const dayMap = {};
-    const categoryMap = {};
+    const dayMap = {}
+    for (let d = new Date(startDate); d <= new Date(endDate); d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]
+      const plan = plans.find(p => p.date === dateStr)
+      const dayEntries = entries.filter(e => e.date === dateStr)
+      const score = scores.find(s => s.date === dateStr)
 
-    // Process plans to get planned minutes per day
-    plans.forEach((plan) => {
-      if (!dayMap[plan.date]) {
-        dayMap[plan.date] = { date: plan.date, plannedMins: 0, actualMins: 0, score: 0 };
+      const plannedMins = plan ? plan.blocks.reduce((sum, b) => {
+        const [sh, sm] = b.plannedStart.split(':').map(Number)
+        const [eh, em] = b.plannedEnd.split(':').map(Number)
+        return sum + ((eh * 60 + em) - (sh * 60 + sm))
+      }, 0) : 0
+
+      dayMap[dateStr] = {
+        date: dateStr,
+        plannedMins,
+        actualMins: dayEntries.reduce((s, e) => s + (e.actualMins || 0), 0),
+        score: score?.overallScore || 0,
       }
-      plan.blocks.forEach((block) => {
-        const [sh, sm] = block.plannedStart.split(':').map(Number);
-        const [eh, em] = block.plannedEnd.split(':').map(Number);
-        const blockMins = eh * 60 + em - (sh * 60 + sm);
-        dayMap[plan.date].plannedMins += blockMins;
-      });
-    });
+    }
 
-    // Process entries to get actual minutes per day and categories
-    entries.forEach((entry) => {
-      if (!dayMap[entry.date]) {
-        dayMap[entry.date] = { date: entry.date, plannedMins: 0, actualMins: 0, score: 0 };
-      }
-
-      if (entry.actualEnd) {
-        const diff = new Date(entry.actualEnd) - new Date(entry.actualStart);
-        const mins = diff / (1000 * 60);
-        dayMap[entry.date].actualMins += mins;
-
-        // Track by category
-        if (!categoryMap[entry.category]) {
-          categoryMap[entry.category] = { name: entry.category, mins: 0 };
-        }
-        categoryMap[entry.category].mins += mins;
-      }
-    });
-
-    // Calculate score for each day (% of planned time completed)
-    Object.values(dayMap).forEach((day) => {
-      if (day.plannedMins > 0) {
-        day.score = Math.round((day.actualMins / day.plannedMins) * 100);
-        day.score = Math.min(100, day.score); // Cap at 100%
-      }
-    });
-
-    // Convert to arrays and sort
-    const days = Object.values(dayMap).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const categories = Object.values(categoryMap);
-
-    res.json({ success: true, days, categories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @route GET /api/analytics/heatmap
-const getHeatmap = async (req, res) => {
-  try {
-    const { year } = req.query;
-    const userId = req.user._id;
-
-    // Get all entries and plans for the year
-    const entries = await Entry.find({
-      userId,
-      date: { $regex: `^${year}` },
-    });
-
-    const plans = await Plan.find({
-      userId,
-      date: { $regex: `^${year}` },
-    });
-
-    // Build heatmap: { date: score }
-    const dayMap = {};
-
-    // Process plans to get planned minutes per day
-    plans.forEach((plan) => {
-      if (!dayMap[plan.date]) {
-        dayMap[plan.date] = { plannedMins: 0, actualMins: 0 };
-      }
-      plan.blocks.forEach((block) => {
-        const [sh, sm] = block.plannedStart.split(':').map(Number);
-        const [eh, em] = block.plannedEnd.split(':').map(Number);
-        const blockMins = eh * 60 + em - (sh * 60 + sm);
-        dayMap[plan.date].plannedMins += blockMins;
-      });
-    });
-
-    // Process entries to get actual minutes per day
-    entries.forEach((entry) => {
-      if (!dayMap[entry.date]) {
-        dayMap[entry.date] = { plannedMins: 0, actualMins: 0 };
-      }
-
-      if (entry.actualEnd) {
-        const diff = new Date(entry.actualEnd) - new Date(entry.actualStart);
-        const mins = diff / (1000 * 60);
-        dayMap[entry.date].actualMins += mins;
-      }
-    });
-
-    // Calculate score for each day (% of planned completed)
-    const heatmap = {};
-    Object.entries(dayMap).forEach(([date, data]) => {
-      if (data.plannedMins > 0) {
-        heatmap[date] = Math.min(100, Math.round((data.actualMins / data.plannedMins) * 100));
-      } else if (data.actualMins > 0) {
-        // If no plan but has entries, give partial score
-        heatmap[date] = 50;
-      }
-    });
-
-    res.json({ success: true, heatmap });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @route GET /api/analytics/month
-const getMonthlySummary = async (req, res) => {
-  try {
-    const { month, year } = req.query;
-    const userId = req.user._id;
-
-    const monthStr = String(month).padStart(2, "0");
-    const monthRegex = `^${year}-${monthStr}`;
-
-    const entries = await Entry.find({
-      userId,
-      date: { $regex: monthRegex },
-    });
-
-    const plans = await Plan.find({
-      userId,
-      date: { $regex: monthRegex },
-    });
-
-    // Build day-by-day scores
-    const dayMap = {};
-    const categoryMap = {};
-
-    // Process plans to get planned minutes per day
-    plans.forEach((plan) => {
-      if (!dayMap[plan.date]) {
-        dayMap[plan.date] = { date: plan.date, plannedMins: 0, actualMins: 0, overallScore: 0 };
-      }
-      plan.blocks.forEach((block) => {
-        const [sh, sm] = block.plannedStart.split(':').map(Number);
-        const [eh, em] = block.plannedEnd.split(':').map(Number);
-        const blockMins = eh * 60 + em - (sh * 60 + sm);
-        dayMap[plan.date].plannedMins += blockMins;
-      });
-    });
-
-    // Process entries to get actual minutes per day and categories
-    entries.forEach((entry) => {
-      if (!dayMap[entry.date]) {
-        dayMap[entry.date] = { date: entry.date, plannedMins: 0, actualMins: 0, overallScore: 0 };
-      }
-
-      if (entry.actualEnd) {
-        const diff = new Date(entry.actualEnd) - new Date(entry.actualStart);
-        const mins = diff / (1000 * 60);
-        dayMap[entry.date].actualMins += mins;
-
-        // Track by category
-        if (!categoryMap[entry.category]) {
-          categoryMap[entry.category] = { name: entry.category, mins: 0 };
-        }
-        categoryMap[entry.category].mins += mins;
-      }
-    });
-
-    // Calculate overall score for each day
-    Object.values(dayMap).forEach((day) => {
-      if (day.plannedMins > 0) {
-        day.overallScore = Math.round((day.actualMins / day.plannedMins) * 100);
-        day.overallScore = Math.min(100, day.overallScore); // Cap at 100%
-      }
-    });
-
-    // Convert to arrays and sort
-    const scores = Object.values(dayMap).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const categories = Object.values(categoryMap);
-
-    // Calculate summary stats
-    const totalActualMins = Object.values(dayMap).reduce((sum, d) => sum + d.actualMins, 0);
-    const totalPlannedMins = Object.values(dayMap).reduce((sum, d) => sum + d.plannedMins, 0);
-    const avgScore = scores.length > 0
-      ? Math.round(scores.reduce((sum, d) => sum + d.overallScore, 0) / scores.filter(d => d.overallScore > 0).length || 0)
-      : 0;
-    const bestDay = scores.length > 0
-      ? scores.reduce((best, d) => d.overallScore > best.overallScore ? d : best)
-      : null;
+    // Category breakdown
+    const categoryMap = {}
+    entries.forEach(e => {
+      if (!categoryMap[e.category]) categoryMap[e.category] = 0
+      categoryMap[e.category] += e.actualMins || 0
+    })
+    const categories = Object.entries(categoryMap)
+      .map(([name, mins]) => ({ name, mins }))
+      .sort((a, b) => b.mins - a.mins)
 
     res.json({
       success: true,
-      scores,
+      days: Object.values(dayMap),
       categories,
-      avgScore,
-      totalActualMins,
-      totalPlannedMins,
-      totalDays: scores.filter(d => d.overallScore > 0).length,
-      bestDay,
-    });
+    })
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message })
   }
-};
+}
 
-module.exports = { getWeeklySummary, getHeatmap, getMonthlySummary };
+const getHeatmap = async (req, res) => {
+  try {
+    const { year } = req.query
+    const startDate = `${year}-01-01`
+    const endDate = `${year}-12-31`
+
+    const scores = await DailyScore.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate },
+    })
+
+    const heatmap = {}
+    scores.forEach(s => { heatmap[s.date] = s.overallScore })
+
+    res.json({ success: true, heatmap })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+const getMonthlyAnalytics = async (req, res) => {
+  try {
+    const { month, year } = req.query
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+
+    const scores = await DailyScore.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate },
+    }).sort({ date: 1 })
+
+    const entries = await TimeEntry.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate },
+      actualEnd: { $ne: null },
+    })
+
+    const totalActualMins = entries.reduce((s, e) => s + (e.actualMins || 0), 0)
+    const avgScore = scores.length
+      ? Math.round(scores.reduce((s, d) => s + d.overallScore, 0) / scores.length)
+      : 0
+
+    const bestDay = scores.length
+      ? scores.reduce((best, d) => d.overallScore > best.overallScore ? d : best)
+      : null
+
+    res.json({
+      success: true,
+      avgScore,
+      totalDays: scores.length,
+      totalActualMins,
+      bestDay,
+      scores,
+    })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+module.exports = { getWeeklyAnalytics, getHeatmap, getMonthlyAnalytics }

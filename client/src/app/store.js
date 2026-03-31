@@ -7,7 +7,7 @@ import goalReducer from '../features/goals/goalSlice'
 import streakReducer from '../features/streaks/streakSlice'
 import journalReducer from '../features/journal/journalSlice'
 import pomodoroReducer from '../features/pomodoro/pomodoroSlice'
-import aiReducer from '../features/ai/aiSlice'
+/*import aiReducer from '../features/ai/aiSlice'*/
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +19,6 @@ export const store = configureStore({
     streaks: streakReducer,
     journal: journalReducer,
     pomodoro: pomodoroReducer,
-    ai: aiReducer,
+    /*ai: aiReducer,*/
   },
 })
