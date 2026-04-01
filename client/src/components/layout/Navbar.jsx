@@ -26,9 +26,15 @@ const Navbar = () => {
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
-        <Link to="/dashboard" className="font-bold text-indigo-600 text-lg tracking-tight flex-shrink-0">
-          FlowDay
-        </Link>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <Link to="/dashboard" className="font-bold text-indigo-600 text-lg tracking-tight">
+            FlowDay
+          </Link>
+          <span className="hidden sm:inline-flex items-center gap-2 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full shadow-sm whitespace-nowrap">
+            <span className="h-2.5 w-2.5 rounded-full bg-indigo-400 shadow-[0_0_0_3px_rgba(99,102,241,0.12)]" />
+            Developed by Devendra Kumar Ojha
+          </span>
+        </div>
 
         <div className="hidden md:flex items-center gap-0.5 overflow-x-auto">
           {NAV_LINKS.map(({ path, label }) => (
