@@ -1,9 +1,41 @@
 const Journal = require('../models/Journal')
 
+const normalizeDate = (date) => {
+  return new Date(date).toISOString().split('T')[0]
+}
+
 const getJournalByDate = async (req, res) => {
   try {
-    const journal = await Journal.findOne({ userId: req.user.id, date: req.params.date })
+    const date = normalizeDate(req.params.date)
+
+    const journal = await Journal.findOne({
+      userId: req.user.id,
+      date,
+    })
+
     res.json({ success: true, journal: journal || null })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+const deleteJournal = async (req, res) => {
+  try {
+    const rawDate = req.params.date || req.body.date
+    if (!rawDate)
+      return res.status(400).json({ success: false, message: 'Date is required' })
+
+    const date = normalizeDate(rawDate)
+
+    const deleted = await Journal.findOneAndDelete({
+      userId: req.user.id,
+      date,
+    })
+
+    if (!deleted)
+      return res.status(404).json({ success: false, message: 'Entry not found' })
+
+    res.json({ success: true })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
@@ -11,11 +43,13 @@ const getJournalByDate = async (req, res) => {
 
 const saveJournal = async (req, res) => {
   try {
-    const { date, content = '', mood = 3, tags = [] } = req.body
+    let { date, content = '', mood = 3, tags = [] } = req.body
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Date is required' })
     }
+
+    date = normalizeDate(date)
 
     const journal = await Journal.findOneAndUpdate(
       { userId: req.user.id, date },
@@ -58,3 +92,4 @@ const searchJournals = async (req, res) => {
 }
 
 module.exports = { getJournalByDate, saveJournal, getAllJournals, searchJournals }
+module.exports.deleteJournal = deleteJournal

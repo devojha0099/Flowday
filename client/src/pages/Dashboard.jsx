@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { loadPlan } from '../features/plans/planSlice'
 import { loadTodayEntries } from '../features/entries/entrySlice'
 import { loadStreaks } from '../features/streaks/streakSlice'
+
 import { useToday, formatDisplayDate } from '../hooks/useToday'
 import Layout from '../components/layout/Layout'
 import BlockForm from '../components/ui/BlockForm'
@@ -24,16 +25,16 @@ const Dashboard = () => {
 
   useEffect(() => {
     dispatch(loadPlan(today))
-    dispatch(loadTodayEntries())
+    dispatch(loadTodayEntries(today))
     dispatch(loadStreaks())
   }, [dispatch, today])
 
   // Refresh entries every 30s if timer running
   useEffect(() => {
     if (!activeTimer) return
-    const interval = setInterval(() => dispatch(loadTodayEntries()), 30000)
+    const interval = setInterval(() => dispatch(loadTodayEntries(today)), 30000)
     return () => clearInterval(interval)
-  }, [activeTimer, dispatch])
+  }, [activeTimer, dispatch, today])
 
   return (
     <Layout>
@@ -44,6 +45,8 @@ const Dashboard = () => {
         </h1>
         <p className="text-slate-500 text-sm mt-0.5">{formatDisplayDate(today)}</p>
       </div>
+
+      
 
       {/* Streaks row */}
       {streaks.length > 0 && (

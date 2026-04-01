@@ -47,7 +47,7 @@ const computeAndSaveScore = async (userId, date) => {
 
 const getTodayEntries = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = req.query.date || new Date().toISOString().split('T')[0]
     const entries = await TimeEntry.find({ userId: req.user.id, date: today })
       .sort({ actualStart: 1 })
     res.json({ success: true, entries })

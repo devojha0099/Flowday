@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
-
-const HOURS = Array.from({ length: 18 }, (_, i) => i + 6)
+import { useDispatch } from 'react-redux'
+import { deleteEntry } from '../../features/entries/entrySlice'
 
 const getDriftLabel = (mins) => {
   if (!mins || mins === 0) return null
@@ -16,6 +16,7 @@ const getEntryStyle = (entry) => {
 }
 
 const Timeline = ({ plan, entries }) => {
+  const dispatch = useDispatch()
   const now = new Date()
   const blocks = plan ? [...plan.blocks].sort((a, b) => a.plannedStart.localeCompare(b.plannedStart)) : []
   const sortedEntries = [...(entries || [])].sort((a, b) => new Date(a.actualStart) - new Date(b.actualStart))
@@ -32,7 +33,7 @@ const Timeline = ({ plan, entries }) => {
   })
   activeHours.add(now.getHours())
 
-  const visibleHours = HOURS.filter(h => activeHours.has(h))
+  const visibleHours = Array.from(activeHours).sort((a, b) => a - b)
 
   const blocksForHour = (hour) => blocks.filter(b => Number(b.plannedStart.split(':')[0]) === hour)
   const entriesForHour = (hour) => sortedEntries.filter(e => new Date(e.actualStart).getHours() === hour)
@@ -92,7 +93,15 @@ const Timeline = ({ plan, entries }) => {
                   const drift = getDriftLabel(entry.driftMinutes)
                   return (
                     <div key={entry._id} className={`rounded-md px-2 py-1.5 text-xs ${getEntryStyle(entry)}`}>
-                      <p className="font-medium truncate">{entry.title}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium truncate">{entry.title}</p>
+                        <button
+                          onClick={() => dispatch(deleteEntry(entry._id))}
+                          className="text-[10px] text-red-600 hover:text-red-700 font-semibold"
+                        >
+                          Delete
+                        </button>
+                      </div>
                       <p className="opacity-70 text-[10px]">
                         {format(new Date(entry.actualStart), 'HH:mm')}
                         {entry.actualEnd ? `–${format(new Date(entry.actualEnd), 'HH:mm')}` : ' – ongoing'}

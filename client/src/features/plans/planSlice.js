@@ -48,7 +48,7 @@ const planSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(loadPlan.pending,    (state) => { state.isLoading = true })
+      .addCase(loadPlan.pending,    (state) => { state.isLoading = true; state.todayPlan = null })
       .addCase(loadPlan.fulfilled,  (state, action) => { state.isLoading = false; state.todayPlan = action.payload })
       .addCase(loadPlan.rejected,   (state, action) => { state.isLoading = false; state.error = action.payload })
       .addCase(addBlock.fulfilled,  (state, action) => { state.todayPlan = action.payload })
