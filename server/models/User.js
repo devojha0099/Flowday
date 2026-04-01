@@ -36,6 +36,7 @@ userSchema.pre('save', function () {
     const suffix = String(this._id).slice(-6)
     this.profileSlug = `${base}-${suffix}`
   }
+  next()
 })
 
 module.exports = mongoose.model('User', userSchema)
